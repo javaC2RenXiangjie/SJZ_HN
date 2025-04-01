@@ -21,19 +21,19 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 # 设置 TESSDATA_PREFIX 环境变量
 os.environ["TESSDATA_PREFIX"] = r'C:\Program Files\Tesseract-OCR\tessdata'
 
-# 定义截屏区域
-# left = 1832
-# top = 1030
-# width = 259
-# height = 34
+car_list = ['黑室服务器室', '蓝室核心']
 
-left = 581
-top = 324
-width = 140
-height = 39
-monitor = {"top": top, "left": left, "width": width, "height": height}
-price_map = {'总裁会客厅': 5500000}
+price_map = {'总裁会客厅': 5500000, '东楼经理室': 3500000, '黑室服务器室':2900000, '蓝室核心':2800000}
 
+screenshot_area = {'总裁会客厅':{'left': 1086, 'top':436, 'width':131, 'height':27}
+                , '黑室服务器室':{'left': 2027, 'top':443, 'width':129, 'height':27}
+                , '蓝室核心':{'left': 1088, 'top':592, 'width':129, 'height':29}
+                }
+
+click_area = {'总裁会客厅': {'x1': 766, 'y1':323, 'x2':851, 'y2':439}
+              , '黑室服务器室': {'x1': 1710, 'y1':333, 'x2':2107, 'y2':441}
+              , '蓝室核心': {'x1': 770, 'y1':484, 'x2':852, 'y2':590}
+              }
 
 def imgClean(img):
     # 转换为 OpenCV 图像
@@ -63,11 +63,12 @@ def getTextFromImg(eroded):
 
     return text
 
-def getAreaPrice():
+def getAreaPrice(left= None, top=None, width=None, height=None):
     with mss.mss() as sct:
-        time.sleep(0.1)
+        time.sleep(0.05)
         # 获取指定区域的截图
-        screenshot = sct.grab(monitor)
+        screenshot = sct.grab({'left': left, 'top':top, 'width':width, 'height':height})
+
         # # 保存截图
         # mss.tools.to_png(screenshot.rgb, screenshot.size, output='region_screenshot.png')
 
@@ -123,26 +124,44 @@ window.activate()
 print('# 窗口激活成功')
 time.sleep(5)
 
-while True:
+
+
+while len(car_list) != 0:
     start_x, start_y = pyautogui.position()  # 获取当前鼠标位置
-    # 生成范围内随机坐标
-    log = random.randint(766, 851)
-    lat = random.randint(323, 439)
+    log = random.randint(click_area[car_list[0]]['x1'], click_area[car_list[0]]['x2'])
+    lat = random.randint(click_area[car_list[0]]['y1'], click_area[car_list[0]]['y2'])
     move_mouse_naturally(start_x, start_y, log, lat, duration=0.1)
-    time.sleep(0.1)
+    # 点击进入购买界面
     pyautogui.click(log, lat, button='left')
-
-    current_price = float(getAreaPrice())
-    if current_price <= price_map['总裁会客厅']:
-        time.sleep(0.1)
-        move_mouse_naturally(log, lat, 2025, 1100, duration=0.1)
-        pyautogui.click(2025, 1100, button='left')
-        print('{}   {}   {}'.format('购买成功', datetime.datetime.now(), current_price))
-        break
-
     time.sleep(0.1)
-    print('{}   {}'.format(datetime.datetime.now(), current_price))
     keyboard.press_and_release('esc')
+
+
+    # 先逐个判断需要购买卡的价格
+    for car_name in car_list:
+        current_price = float(getAreaPrice(screenshot_area[car_name]['left'], screenshot_area[car_name]['top'], screenshot_area[car_name]['width'], screenshot_area[car_name]['height']))
+        if current_price <= price_map[car_name]:
+            start_x, start_y = pyautogui.position()  # 获取当前鼠标位置
+            # 生成终点范围内随机坐标
+            log = random.randint(click_area[car_name]['x1'], click_area[car_name]['x2'])
+            lat = random.randint(click_area[car_name]['y1'], click_area[car_name]['y2'])
+            move_mouse_naturally(start_x, start_y, log, lat, duration=0.1)
+            time.sleep(0.05)
+            # 点击进入购买界面
+            pyautogui.click(log, lat, button='left')
+
+            # 鼠标移动至购买按钮范围，并点击
+            move_mouse_naturally(log, lat, 2025, 1100, duration=0.1)
+            # pyautogui.click(2025, 1100, button='left')
+            print('{}---{}---{}---{}'.format('购买成功', car_name, datetime.datetime.now(), current_price))
+
+            # 从待买列表删除已买卡片
+            car_list.remove(car_name)
+            keyboard.press_and_release('esc')
+            move_mouse_naturally(log, lat, 1430, 200, duration=0.05)
+            continue
+        print('{}---{}---{}---{}'.format('正在观察', car_name, datetime.datetime.now(), current_price))
+
 
 
 
