@@ -2,10 +2,10 @@ from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 import mss
 import time
 
-monitor = {'left': 1088, 'top':592, 'width':129, 'height':29}
+monitor = {'left': 2027, 'top':592, 'width':129, 'height':27}
 
 with mss.mss() as sct:
-    time.sleep(3)
+    time.sleep(2)
 
     # 获取指定区域的截图
     screenshot = sct.grab(monitor)
